@@ -18,7 +18,7 @@
         <field name="inherit_id" ref="delivery.view_picking_withcarrier_out_form" />
         <field name="arch" type="xml">
             <label for="weight" position="before">
-                <field name="is_manual_weight" invisible="1" />
+                <field name="is_manual_weight" />
                 <label
                     for="weight_manual"
                     attrs="{'invisible': [('is_manual_weight', '=', False)]}"

@@ -7,13 +7,23 @@ from odoo import api, fields, models
 class StockPicking(models.Model):
     _inherit = "stock.picking"
 
-    is_manual_weight = fields.Boolean(related="carrier_id.is_manual_weight")
+    is_manual_weight = fields.Boolean(
+        string="Manual Weights",
+        compute="_compute_is_manual_weight",
+        store=True,
+        readonly=False,
+    )
     weight_manual = fields.Float(string="Weight (Manual)", digits="Stock Weight")
     shipping_weight_manual = fields.Float(string="Weight for Shipping (Manual)")
 
-    @api.depends("move_ids", "carrier_id", "weight_manual")
+    @api.depends("carrier_id")
+    def _compute_is_manual_weight(self):
+        for rec in self:
+            rec.is_manual_weight = rec.carrier_id.is_manual_weight
+
+    @api.depends("move_ids", "carrier_id", "weight_manual", "is_manual_weight")
     def _cal_weight(self):
-        manual_weight = self.filtered(lambda p: p.carrier_id.is_manual_weight)
+        manual_weight = self.filtered(lambda p: p.is_manual_weight)
         for rec in manual_weight:
             rec.weight = rec.weight_manual
         return super(StockPicking, self - manual_weight)._cal_weight()
@@ -24,9 +34,10 @@ class StockPicking(models.Model):
         "weight_bulk",
         "carrier_id",
         "shipping_weight_manual",
+        "is_manual_weight",
     )
     def _compute_shipping_weight(self):
-        manual_weight = self.filtered(lambda p: p.carrier_id.is_manual_weight)
+        manual_weight = self.filtered(lambda p: p.is_manual_weight)
         for rec in manual_weight:
             rec.shipping_weight = rec.shipping_weight_manual
         return super(StockPicking, self - manual_weight)._compute_shipping_weight()
